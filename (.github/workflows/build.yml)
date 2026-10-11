@@ -1,0 +1,41 @@
+name: Build Release APK
+on:
+  workflow_dispatch:
+    inputs:
+      admob_id:
+        description: 'AdMob App ID'
+        required: false
+      agora_id:
+        description: 'Agora App ID'
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare Environment & Secrets
+        run: |
+          chmod +x ./gradlew || true
+          echo "ADMOB_APP_ID=${{ github.event.inputs.admob_id }}" >> .env
+          echo "AGORA=${{ github.event.inputs.agora_id }}" >> .env
+
+      - name: Compile APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK File
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
